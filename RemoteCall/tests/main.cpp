@@ -60,11 +60,11 @@ int main (int argc, char * argv[])
 	using endpoint = mtl::remote::endpoint<mtl::binary_stream, std::string, acceptor>;
 
 
-	endpoint::function<void(int, int)> remote_add = { "add" };
+	endpoint::function<int(int, int)> remote_add = { "add" };
 	
 	
 	auto l = acceptor::stream_context::lock(functions);
-	remote_add(1, 2);
+	auto r = remote_add(1, 2);
 
 
 	/*

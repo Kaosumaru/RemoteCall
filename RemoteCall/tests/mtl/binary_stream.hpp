@@ -27,7 +27,7 @@ namespace mtl
 
 }
 
-
+//arithmethic (TODO endianess)
 template<typename T>
 typename std::enable_if< std::is_arithmetic<T>::value, mtl::binary_stream>::type&
 operator >> (mtl::binary_stream& ss, T& t)
@@ -45,7 +45,7 @@ operator << (mtl::binary_stream& ss, const T& t)
 }
 
 
-
+//std::string
 mtl::binary_stream& operator >> (mtl::binary_stream& ss, std::string& t)
 {
 	std::size_t size;
@@ -57,7 +57,6 @@ mtl::binary_stream& operator >> (mtl::binary_stream& ss, std::string& t)
 	return ss;
 }
 
-
 mtl::binary_stream& operator << (mtl::binary_stream& ss, std::string& t)
 {
 	std::size_t size = t.size();
@@ -65,5 +64,15 @@ mtl::binary_stream& operator << (mtl::binary_stream& ss, std::string& t)
 	ss.write((char*)t.c_str(), size);
 	return ss;
 }
+
+//const char * (C style string)
+mtl::binary_stream& operator << (mtl::binary_stream& ss, const char* str)
+{
+	std::size_t size = strlen(str);
+	ss << size;
+	ss.write(str, size);
+	return ss;
+}
+
 
 #endif

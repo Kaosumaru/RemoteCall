@@ -19,16 +19,14 @@ namespace mtl
 			static R accept_stream(Stream &ss)
 			{
 				auto &current = stream_context::current();
-				current.call_from_stream(ss); //todo get return
-				return {};
+				return current.call_from_stream<R>(ss); 
 			}
 
 			template<>
 			static void accept_stream<void>(Stream &ss)
 			{
 				auto &current = stream_context::current();
-				current.call_from_stream(ss);
-				return;
+				current.call_from_stream<void>(ss);
 			}
 		};
 

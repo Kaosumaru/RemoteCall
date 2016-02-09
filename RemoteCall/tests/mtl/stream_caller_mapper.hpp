@@ -5,13 +5,39 @@
 #include <map>
 #include <unordered_map>
 #include "stream_caller.hpp"
-
+#include "context.hpp"
 
 namespace mtl
 {
 	template<typename Stream, typename FunctionID = std::string>
 	class function_mapper
 	{
+	private:
+		template<typename R, typename T>
+		struct LambdaCreator
+		{
+			static auto create(T& function)
+			{
+				return [=](Stream& ss)
+				{
+					using c = context<R, function_mapper>;
+					c::current() = mtl::call_from_stream(ss, function);
+				};
+			}
+		};
+
+		template<typename T>
+		struct LambdaCreator<void,T>
+		{
+			static auto create(T& function)
+			{
+				return [=](Stream& ss)
+				{
+					mtl::call_from_stream(ss, function);
+				};
+			}
+		};
+
 	public:
 		using Function = std::function<void(Stream& ss)>;
 		using Map = std::unordered_map<FunctionID, Function>;
@@ -19,13 +45,32 @@ namespace mtl
 		template<typename T>
 		void add_function(const FunctionID& id, const T& function)
 		{
-			_functions[id] = [=](Stream& ss)
-			{
-				auto r = mtl::call_from_stream(ss, function);
-			};
+			using traits = function_traits<T>;
+			_functions[id] = LambdaCreator<typename traits::return_type, T >::create(function);
 		}
 
-		void call_from_stream(Stream& ss)
+		template<typename R>
+		R call_from_stream(Stream& ss)
+		{
+			FunctionID id;
+			ss >> id;
+			auto it = _functions.find(id);
+			if (it == _functions.end())
+				throw std::domain_error("Unkown function");
+
+			auto &f = it->second;
+
+			R r;
+			{
+				using c = context<R, function_mapper>;
+				auto l = c::lock(r);
+				f(ss);
+			}
+			return r;
+		}
+
+		template<>
+		void call_from_stream<void>(Stream& ss)
 		{
 			FunctionID id;
 			ss >> id;
