@@ -31,7 +31,7 @@ namespace mtl
 			{
 				std::tuple<typename std::decay<Args>::type...> args;
 				auto fill_args = {
-					((s >> std::get<Is>(args)), 0)...
+					0, ((s >> std::get<Is>(args)), 0)...
 				};
 
 				return f(std::get<Is>(args)...);
@@ -46,6 +46,16 @@ namespace mtl
 		return impl::stream_caller<Stream, Func>().Call(stream, func);
 	}
 
+
+	template <typename Stream, typename... Args>
+	Stream arguments_to_stream(Args&&... args)
+	{
+		Stream ss;
+		auto fill_args = {
+			0, ((ss << std::forward<Args>(args)), 0)...
+		};
+		return ss;
+	}
 
 }
 

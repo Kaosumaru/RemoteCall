@@ -3,7 +3,10 @@
 #include "mtl/function_traits.hpp"
 #include "mtl/make_pipe.hpp"
 #include "mtl/stream_caller_mapper.hpp"
+#include "mtl/remote_endpoint.hpp"
+#include "mtl/remote_acceptor.hpp"
 #include <sstream>
+
 
 #ifndef _MSC_VER
 #define lest_FEATURE_COLOURISE 1
@@ -47,17 +50,30 @@ int add(int a, int b)
 
 int main (int argc, char * argv[])
 {
+
 	//register_reflection<Test>;
-	mtl::function_mapper<stringstream> functions;
+	mtl::function_mapper<mtl::binary_stream> functions;
 	functions.add_function("add", add);
 
 
+	using acceptor = mtl::remote::context_caller_mapper_acceptor<mtl::binary_stream>;
+	using endpoint = mtl::remote::endpoint<mtl::binary_stream, std::string, acceptor>;
+
+
+	endpoint::function<void(int, int)> remote_add = { "add" };
+	
+	
+	auto l = acceptor::stream_context::lock(functions);
+	remote_add(1, 2);
+
+
+	/*
 	stringstream ss;
 	ss << std::quoted("add") << 1 << " " << 2;
 
 
 	functions.call_from_stream(ss);
-
+	*/
 
 	return 0;
 }

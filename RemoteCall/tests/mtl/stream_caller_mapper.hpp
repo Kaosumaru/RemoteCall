@@ -4,7 +4,6 @@
 #include <functional>
 #include <map>
 #include <unordered_map>
-#include <iomanip>
 #include "stream_caller.hpp"
 
 
@@ -29,7 +28,7 @@ namespace mtl
 		void call_from_stream(Stream& ss)
 		{
 			FunctionID id;
-			ss >> std::quoted(id);
+			ss >> id;
 			auto it = _functions.find(id);
 			if (it == _functions.end())
 				return;
