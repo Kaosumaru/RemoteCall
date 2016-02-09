@@ -50,7 +50,7 @@ namespace mtl
 		}
 
 		template<typename R>
-		R call_from_stream(Stream& ss)
+		void call_from_stream(Stream& ss, const std::function<void(R&&)>& callback = nullptr)
 		{
 			FunctionID id;
 			ss >> id;
@@ -66,11 +66,12 @@ namespace mtl
 				auto l = c::lock(r);
 				f(ss);
 			}
-			return r;
+			if (callback)
+				callback(std::move(r));
 		}
-
-		template<>
-		void call_from_stream<void>(Stream& ss)
+		
+		
+		void call_from_stream_void(Stream& ss, const std::function<void(void)>& callback = nullptr)
 		{
 			FunctionID id;
 			ss >> id;
@@ -79,6 +80,8 @@ namespace mtl
 				return;
 			auto &f = it->second;
 			f(ss);
+			if (callback)
+				callback();
 		}
 	protected:
 

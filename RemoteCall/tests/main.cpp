@@ -48,15 +48,18 @@ int add(int a, int b)
 	return a + b;
 }
 
+
+
 int main (int argc, char * argv[])
 {
+
 
 	//register_reflection<Test>;
 	mtl::function_mapper<mtl::binary_stream> functions;
 	functions.add_function("add", add);
 
 
-	using acceptor = mtl::remote::context_caller_mapper_acceptor<mtl::binary_stream>;
+	using acceptor = mtl::remote::delayed_context_caller_mapper_acceptor<mtl::binary_stream>;
 	using endpoint = mtl::remote::endpoint<mtl::binary_stream, std::string, acceptor>;
 
 
@@ -65,7 +68,8 @@ int main (int argc, char * argv[])
 	
 	auto l = acceptor::stream_context::lock(functions);
 	auto r = remote_add(1, 2);
-
+	auto f = r.get_future();
+	auto x = f.get();
 
 	/*
 	stringstream ss;

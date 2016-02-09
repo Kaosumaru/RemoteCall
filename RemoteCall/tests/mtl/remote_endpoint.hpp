@@ -13,6 +13,7 @@ namespace mtl
 		template<typename Stream,typename FunctionID = std::string>
 		struct dummy_acceptor
 		{
+
 			template<typename R>
 			static R accept_stream(Stream &ss)
 			{
@@ -43,7 +44,9 @@ namespace mtl
 			{
 				function(const FunctionID& id) : _id(id) {}
 
-				R operator() (Args... args)
+				using ReturnType = decltype(Acceptor::template accept_stream<R>(Stream{}));
+
+				ReturnType operator() (Args... args)
 				{
 					auto stream = arguments_to_stream<Stream>(_id, std::forward<Args>(args)...);
 					return Acceptor::template accept_stream<R>(stream);
