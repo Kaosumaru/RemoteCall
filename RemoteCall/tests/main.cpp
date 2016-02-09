@@ -67,8 +67,7 @@ int main (int argc, char * argv[])
 	
 	
 	auto l = acceptor::stream_context::lock(functions);
-	auto r = remote_add(1, 2);
-	auto f = r.get_future();
+	auto f = remote_add(1, 2);
 	auto x = f.get();
 
 	/*

@@ -42,22 +42,27 @@ namespace mtl
 			using stream_context = context< mapper >;
 
 			template<typename R>
-			static std::promise<R> accept_stream(Stream &ss)
+			static std::future<R> accept_stream(Stream &ss)
 			{
 				auto &current = stream_context::current();
-				std::promise<R> ret;
-				current.call_from_stream<R>(ss, [&](auto && r) { ret.set_value(std::move(r)); });
-				return ret;
+				
+				auto ret = std::make_shared< std::promise<R> >(); //TODO this sucks, fix this
+				auto f = ret->get_future();
+
+				current.call_from_stream<R>(ss, [p = ret](auto && r) { p->set_value(std::move(r)); });
+				return f;
 			}
 
 			template<>
-			static std::promise<void> accept_stream<void>(Stream &ss)
+			static std::future<void> accept_stream<void>(Stream &ss)
 			{
 				auto &current = stream_context::current();
 
-				std::promise<void> ret;
-				call_from_stream_void(ss, [&]() { ret.set_value(); });
-				return ret;
+				auto ret = std::make_shared<std::promise<R>>(); //TODO this sucks, fix this
+				auto f = ret->get_future();
+
+				call_from_stream_void(ss, [p = ret]() { p->set_value(); });
+				return f;
 			}
 		};
 
