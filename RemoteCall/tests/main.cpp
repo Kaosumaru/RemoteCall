@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include "mtl/function_traits.hpp"
 #include "mtl/make_pipe.hpp"
-#include "mtl/stream_caller.hpp"
+#include "mtl/stream_caller_mapper.hpp"
 #include <sstream>
 
 #ifndef _MSC_VER
@@ -11,7 +11,7 @@
 
 //#include "lest.hpp"
 
-using namespace std;
+
 
 /*
 template<class F>
@@ -34,18 +34,11 @@ public:
 */
 
 
-template<class T>
-struct register_reflection
-{
 
-};
 
-struct Test
-{
-	int a;
-	int b;
-};
 
+
+using namespace std;
 
 int add(int a, int b)
 {
@@ -55,10 +48,16 @@ int add(int a, int b)
 int main (int argc, char * argv[])
 {
 	//register_reflection<Test>;
+	mtl::function_mapper<stringstream> functions;
+	functions.add_function("add", add);
+
 
 	stringstream ss;
-	ss << 1 << 2;
+	ss << std::quoted("add") << 1 << " " << 2;
 
-	auto r = mtl::call_from_stream(ss, add);
+
+	functions.call_from_stream(ss);
+
+
 	return 0;
 }
