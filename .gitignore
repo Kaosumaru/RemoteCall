@@ -26,3 +26,5 @@
 *.exe
 *.out
 *.app
+RemoteCall/tests/conanbuildinfo.cmake
+RemoteCall/tests/conaninfo.txt

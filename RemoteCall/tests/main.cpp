@@ -53,6 +53,9 @@ int add(int a, int b)
 
 int main (int argc, char * argv[])
 {
+	WSADATA wsaData;
+	auto i = WSAStartup(MAKEWORD(2, 0), &wsaData);
+
 #ifdef WIN32
 	netLink::init();
 #endif

@@ -85,7 +85,7 @@ namespace mtl
 
 					//Init socket as TCP server or client on port 3823
 					if (socket->hostRemote == "*")
-						socket->initAsTcpServer("*", 3823);
+						socket->initAsTcpServer("127.0.0.1", 3823);
 					else
 						socket->initAsTcpClient(socket->hostRemote, 3823);
 				}
