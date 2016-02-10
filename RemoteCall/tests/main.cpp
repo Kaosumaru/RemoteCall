@@ -4,6 +4,7 @@
 #include "mtl/make_pipe.hpp"
 #include "mtl/stream_caller_mapper.hpp"
 #include "mtl/remote_endpoint.hpp"
+#include "mtl/remote_endpoint_tcp.hpp"
 #include "mtl/remote_acceptor.hpp"
 #include <sstream>
 
@@ -52,7 +53,12 @@ int add(int a, int b)
 
 int main (int argc, char * argv[])
 {
+#ifdef WIN32
+	netLink::init();
+#endif
 
+	mtl::remote::netlinkTest();
+	return 0;
 
 	//register_reflection<Test>;
 	mtl::function_mapper<mtl::binary_stream> functions;
