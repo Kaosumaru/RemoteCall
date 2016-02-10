@@ -46,7 +46,11 @@ namespace mtl
 		void add_function(const FunctionID& id, const T& function)
 		{
 			using traits = function_traits<T>;
-			_functions[id] = LambdaCreator<typename traits::return_type, T >::create(function);
+			auto& f = _functions[id];
+			if (!f)
+				throw std::domain_error("Duplicate entry");
+			
+			f = LambdaCreator<typename traits::return_type, T >::create(function);
 		}
 
 		template<typename R>
@@ -56,7 +60,7 @@ namespace mtl
 			ss >> id;
 			auto it = _functions.find(id);
 			if (it == _functions.end())
-				throw std::domain_error("Unkown function");
+				throw std::domain_error("Unknown function");
 
 			auto &f = it->second;
 
