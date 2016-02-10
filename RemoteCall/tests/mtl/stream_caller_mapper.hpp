@@ -47,7 +47,7 @@ namespace mtl
 		{
 			using traits = function_traits<T>;
 			auto& f = _functions[id];
-			if (!f)
+			if (f)
 				throw std::domain_error("Duplicate entry");
 			
 			f = LambdaCreator<typename traits::return_type, T >::create(function);
