@@ -6,6 +6,9 @@ include(CommonFunctions)
 
 project (Tests)
 
+include(conanbuildinfo.cmake)
+conan_basic_setup()
+
 
 if (MSVC)
 add_definitions( "/W3 /D_CRT_SECURE_NO_WARNINGS /wd4018 /wd4005 /wd4996 /nologo" )
@@ -17,4 +20,4 @@ endif(MSVC)
 add_folder(mtl)
 
 add_executable (Tests main.cpp ${SRCS})
-#target_Link_Libraries(Tests ${RPN_Deps})
+target_link_libraries(Tests ${CONAN_LIBS})

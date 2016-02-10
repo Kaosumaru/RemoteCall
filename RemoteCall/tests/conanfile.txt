@@ -1,0 +1,5 @@
+[requires]
+netLink/master@Kaosumaru/stable
+
+[generators]
+cmake
