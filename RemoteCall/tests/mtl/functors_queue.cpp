@@ -2,12 +2,6 @@
 
 using namespace mtl;
 
-
-double functors_queue::current_time()
-{
-	return 0.0;
-}
-
 functors_queue::functors_queue()
 {
 }
@@ -48,18 +42,18 @@ bool functors_queue::empty()
 	return _queuedFunctors.empty() && _plannedFunctors.empty();
 }
 
-void functors_queue::plan_functor(double inSeconds, const Functor& functor)
+void functors_queue::plan_functor(const Duration& time, const Functor& functor)
 {
-	if (inSeconds == 0.0)
+	if (time == time.zero())
 	{
 		queue_functor(functor);
 		return;
 	}
 
 	std::lock_guard<std::mutex> lock(_mutex);
-	auto time = current_time() + inSeconds;
+	auto time_point = current_time() + time;
 
-	_plannedFunctors.insert(make_pair(time, functor));
+	_plannedFunctors.insert(make_pair(time_point, functor));
 }
 
 void functors_queue::queue_functor(const Functor& functor)

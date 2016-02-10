@@ -1,11 +1,12 @@
 #ifndef MTL_FUNCTORS_QUEUE
 #define MTL_FUNCTORS_QUEUE
-#include<memory>
-#include<vector>
-#include<map>
-#include<functional>
-#include<thread>
-#include<mutex>
+#include <memory>
+#include <vector>
+#include <map>
+#include <functional>
+#include <thread>
+#include <mutex>
+#include <chrono>
 
 namespace mtl
 {
@@ -13,16 +14,19 @@ namespace mtl
 	class functors_queue
 	{
 	public:
+		using Duration = std::chrono::duration<double>;
+		using Clock = std::chrono::steady_clock;
 		using Functor = std::function< void(void) >;
+		using TimePoint = std::chrono::time_point<Clock, Duration>;
 
 		functors_queue();
 
 
-		void plan_functor(double inSeconds, const Functor& functor);
+		void plan_functor(const Duration& time, const Functor& functor);
 		void queue_functor(const Functor& functor);
 
 		template<typename T>
-		void plan_weak_functor(double inSeconds, const Functor& functor, const std::shared_ptr<T> &object)
+		void plan_weak_functor(const Duration& time, const Functor& functor, const std::shared_ptr<T> &object)
 		{
 			std::weak_ptr<T> weak(object);
 			auto wrapper_functor = [=]()
@@ -31,7 +35,7 @@ namespace mtl
 				if (lock)
 					functor();
 			};
-			planFunctor(inSeconds, wrapper_functor);
+			planFunctor(time, wrapper_functor);
 		}
 
 
@@ -39,13 +43,15 @@ namespace mtl
 
 		bool empty();
 	protected:
-		double current_time();
+		auto current_time()
+		{
+			return Clock::now();
+		}
 
-		std::multimap<double, Functor> _plannedFunctors;
+		std::multimap<TimePoint, Functor> _plannedFunctors;
 		std::vector<Functor> _queuedFunctors;
 		std::mutex _mutex;
 	};
-
 
 };
 
