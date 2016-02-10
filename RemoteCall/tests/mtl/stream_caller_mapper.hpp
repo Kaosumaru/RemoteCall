@@ -18,10 +18,10 @@ namespace mtl
 		{
 			static auto create(T& function)
 			{
-				return [=](Stream& ss)
+				return [=](Stream& ss, Stream& out)
 				{
 					using c = context<R, function_mapper>;
-					c::current() = mtl::call_from_stream(ss, function);
+					out << mtl::call_from_stream(ss, function);
 				};
 			}
 		};
@@ -31,7 +31,7 @@ namespace mtl
 		{
 			static auto create(T& function)
 			{
-				return [=](Stream& ss)
+				return [=](Stream& ss, Stream& out)
 				{
 					mtl::call_from_stream(ss, function);
 				};
@@ -39,7 +39,7 @@ namespace mtl
 		};
 
 	public:
-		using Function = std::function<void(Stream& ss)>;
+		using Function = std::function<void(Stream& ss, Stream& out)>;
 		using Map = std::unordered_map<FunctionID, Function>;
 
 		template<typename T>
@@ -49,29 +49,7 @@ namespace mtl
 			_functions[id] = LambdaCreator<typename traits::return_type, T >::create(function);
 		}
 
-		template<typename R>
-		void call_from_stream(Stream& ss, const std::function<void(R&&)>& callback = nullptr)
-		{
-			FunctionID id;
-			ss >> id;
-			auto it = _functions.find(id);
-			if (it == _functions.end())
-				throw std::domain_error("Unkown function");
-
-			auto &f = it->second;
-
-			R r;
-			{
-				using c = context<R, function_mapper>;
-				auto l = c::lock(r);
-				f(ss);
-			}
-			if (callback)
-				callback(std::move(r));
-		}
-		
-		
-		void call_from_stream_void(Stream& ss, const std::function<void(void)>& callback = nullptr)
+		void call_from_stream_out(Stream& ss, Stream& out)
 		{
 			FunctionID id;
 			ss >> id;
@@ -79,9 +57,26 @@ namespace mtl
 			if (it == _functions.end())
 				return;
 			auto &f = it->second;
-			f(ss);
-			if (callback)
-				callback();
+			f(ss, out);
+		}
+
+
+		template<typename R>
+		R call_from_stream(Stream& ss)
+		{
+			Stream out;
+			call_from_stream_out(ss, out);
+
+			R r;
+			out >> r;
+			return r;
+		}
+		
+		
+		void call_from_stream_void(Stream& ss)
+		{
+			Stream out;
+			call_from_stream_out(ss, out);
 		}
 	protected:
 

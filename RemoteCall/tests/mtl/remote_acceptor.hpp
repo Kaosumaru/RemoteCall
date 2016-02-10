@@ -20,16 +20,14 @@ namespace mtl
 			static R accept_stream(Stream &ss)
 			{
 				auto &current = stream_context::current();
-				R ret;
-				current.call_from_stream<R>(ss, [&](auto && r) { ret = std::move(r); });
-				return ret;
+				return current.call_from_stream<R>(ss);
 			}
 
 			template<>
 			static void accept_stream<void>(Stream &ss)
 			{
 				auto &current = stream_context::current();
-				call_from_stream_void(ss, nullptr);
+				current.call_from_stream_void(ss);
 			}
 		};
 
@@ -46,10 +44,10 @@ namespace mtl
 			{
 				auto &current = stream_context::current();
 				
-				auto ret = std::make_shared< std::promise<R> >(); //TODO this sucks, fix this
-				auto f = ret->get_future();
+				std::promise<R>  ret;
+				auto f = ret.get_future();
+				ret.set_value(current.call_from_stream<R>(ss));
 
-				current.call_from_stream<R>(ss, [p = ret](auto && r) { p->set_value(std::move(r)); });
 				return f;
 			}
 
@@ -58,10 +56,11 @@ namespace mtl
 			{
 				auto &current = stream_context::current();
 
-				auto ret = std::make_shared<std::promise<R>>(); //TODO this sucks, fix this
-				auto f = ret->get_future();
+				std::promise<R>  ret;
+				auto f = ret.get_future();
+				current.call_from_stream_void(ss);
+				ret.set_value();
 
-				call_from_stream_void(ss, [p = ret]() { p->set_value(); });
 				return f;
 			}
 		};
