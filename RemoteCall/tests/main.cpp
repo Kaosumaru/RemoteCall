@@ -6,6 +6,7 @@
 #include "mtl/remote_endpoint.hpp"
 #include "mtl/remote_endpoint_tcp.hpp"
 #include "mtl/remote_acceptor.hpp"
+#include "mtl/remote_endpoint_async.hpp"
 #include <sstream>
 
 
@@ -60,15 +61,12 @@ int main (int argc, char * argv[])
 	netLink::init();
 #endif
 
-	mtl::remote::netlinkTest();
-	return 0;
-
 	//register_reflection<Test>;
-	mtl::function_mapper<mtl::binary_stream> functions;
+	mtl::function_mapper_async_proxy<mtl::binary_stream> functions;
 	functions.add_function("add", add);
 
-
-	using acceptor = mtl::remote::delayed_context_caller_mapper_acceptor<mtl::binary_stream>;
+	
+	using acceptor = mtl::remote::context_caller_mapper_async_acceptor<mtl::binary_stream>;
 	using endpoint = mtl::remote::endpoint<mtl::binary_stream, std::string, acceptor>;
 
 
@@ -78,7 +76,7 @@ int main (int argc, char * argv[])
 	auto l = acceptor::stream_context::lock(functions);
 	auto f = remote_add(1, 2);
 	auto x = f.get();
-
+	
 	/*
 	stringstream ss;
 	ss << std::quoted("add") << 1 << " " << 2;
