@@ -4,9 +4,8 @@
 #include "mtl/make_pipe.hpp"
 #include "mtl/stream_caller_mapper.hpp"
 #include "mtl/remote_endpoint.hpp"
-#include "mtl/remote_endpoint_tcp.hpp"
 #include "mtl/remote_acceptor.hpp"
-#include "mtl/remote_endpoint_async.hpp"
+#include "mtl/future.hpp"
 #include <sstream>
 
 
@@ -54,13 +53,17 @@ int add(int a, int b)
 
 int main (int argc, char * argv[])
 {
-	WSADATA wsaData;
-	auto i = WSAStartup(MAKEWORD(2, 0), &wsaData);
 
-#ifdef WIN32
-	netLink::init();
-#endif
+	auto p = mtl::promise<int>::create();
+	p->set_value(5);
+	p->get_future().then([](int& a)
+	{
 
+	});
+
+	
+
+	return 0;
 	//register_reflection<Test>;
 	mtl::function_mapper_async_proxy<mtl::binary_stream> functions;
 	functions.add_function("add", add);
@@ -76,6 +79,10 @@ int main (int argc, char * argv[])
 	auto l = acceptor::stream_context::lock(functions);
 	auto f = remote_add(1, 2);
 	auto x = f.get();
+
+
+
+
 	
 	/*
 	stringstream ss;
