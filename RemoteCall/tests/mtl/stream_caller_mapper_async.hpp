@@ -7,6 +7,7 @@
 #include <future>
 #include "stream_caller.hpp"
 #include "context.hpp"
+#include "future.hpp"
 
 namespace mtl
 {
@@ -68,10 +69,28 @@ namespace mtl
 
 
 		template<typename R>
-		std::future<R> call_from_stream(Stream& ss)
+		mtl::future<R> call_from_stream(Stream& ss)
 		{
-			std::future<R> r;
-			return r;
+			auto promise = mtl::promise<R>::create();
+			Stream out;
+			call_from_stream_out(ss, out);
+
+			R r;
+			ss >> r;
+			promise->set_value(r);
+
+
+			return promise->get_future();
+		}
+
+		template<>
+		mtl::future<void> call_from_stream(Stream& ss)
+		{
+			auto promise = mtl::promise<void>::create();
+			Stream out;
+			call_from_stream_out(ss, out);
+			promise->set_value();
+			return promise->get_future();
 		}
 
 	protected:

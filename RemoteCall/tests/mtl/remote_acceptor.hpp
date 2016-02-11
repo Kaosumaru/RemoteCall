@@ -5,7 +5,7 @@
 #include "context.hpp"
 #include "stream_caller_mapper.hpp"
 #include "stream_caller_mapper_async.hpp"
-#include <future>
+
 
 namespace mtl
 {
@@ -41,7 +41,7 @@ namespace mtl
 			using stream_context = context< mapper >;
 
 			template<typename R>
-			static std::future<R> accept_stream(Stream &ss)
+			static mtl::future<R> accept_stream(Stream &ss)
 			{
 				auto &current = stream_context::current();
 				return current.call_from_stream<R>(ss);

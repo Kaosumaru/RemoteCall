@@ -54,9 +54,9 @@ int add(int a, int b)
 int main (int argc, char * argv[])
 {
 
-	auto p = mtl::promise<int>::create();
-	p->set_value(5);
-	p->get_future().then([](int& a)
+	auto p = mtl::promise<void>::create();
+	p->set_value();
+	p->get_future().then([]()
 	{
 
 	});
@@ -78,7 +78,7 @@ int main (int argc, char * argv[])
 	
 	auto l = acceptor::stream_context::lock(functions);
 	auto f = remote_add(1, 2);
-	auto x = f.get();
+	f.then([](int &a) {});
 
 
 
