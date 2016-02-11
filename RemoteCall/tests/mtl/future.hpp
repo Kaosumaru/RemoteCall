@@ -33,7 +33,7 @@ namespace mtl
 				_done = true;
 				_t = t;
 				for (auto &c : _callbacks)
-					c(t);
+					c(_t);
 			}
 
 			void set_value(T&& t)
@@ -42,7 +42,7 @@ namespace mtl
 				_done = true;
 				_t = std::move(t);
 				for (auto &c : _callbacks)
-					c(t);
+					c(_t);
 			}
 
 		protected:
@@ -61,6 +61,45 @@ namespace mtl
 
 			bool       _done = false;
 			T          _t;
+			std::mutex _callbacks_mutex;
+			std::vector<callback> _callbacks;
+		};
+
+		template<>
+		class promise_base<void> : public std::enable_shared_from_this<promise_base<void>>
+		{
+		protected:
+			template<typename T>
+			friend class mtl::future;
+
+			promise_base() {}
+			promise_base(const promise_base& other) = delete; // non construction-copyable
+			promise_base& operator=(const promise_base&) = delete; // non copyable
+
+		public:
+			void set_value()
+			{
+				std::lock_guard<std::mutex> guard(_callbacks_mutex);
+				_done = true;
+				for (auto &c : _callbacks)
+					c();
+			}
+
+		protected:
+			using callback = std::function<void(void)>;
+
+			void add_callback(const callback& c)
+			{
+				std::lock_guard<std::mutex> guard(_callbacks_mutex);
+				if (_done)
+				{
+					c();
+					return;
+				}
+				_callbacks.push_back(c);
+			}
+
+			bool       _done = false;
 			std::mutex _callbacks_mutex;
 			std::vector<callback> _callbacks;
 		};
