@@ -35,7 +35,7 @@ namespace mtl
 		
 		//WIP
 		template<typename Stream, typename Proxy >
-		struct context_caller_mapper_async_acceptor
+		struct context_caller_mapper_proxy_acceptor
 		{
 			using mapper = function_mapper_proxy< Stream, Proxy >;
 			using stream_context = context< mapper >;

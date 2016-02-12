@@ -18,6 +18,7 @@ endif(MSVC)
 #include_directories ("${RPN_Includes}")
 
 add_folder(mtl)
+add_folder(mtl/lockless)
 
 add_executable (Tests main.cpp ${SRCS})
 target_link_libraries(Tests ${CONAN_LIBS})

@@ -6,6 +6,7 @@
 #include "mtl/remote_endpoint.hpp"
 #include "mtl/remote_acceptor.hpp"
 #include "mtl/future.hpp"
+#include "mtl/lockless/slist.hpp"
 #include <sstream>
 
 
@@ -14,29 +15,6 @@
 #endif
 
 //#include "lest.hpp"
-
-
-
-/*
-template<class F>
-struct function_traits
-{
-private:
-	using call_type = function_traits<decltype(&F::operator())>;
-public:
-	using return_type = typename call_type::return_type;
-
-	static constexpr std::size_t arity = call_type::arity - 1;
-
-	template <std::size_t N>
-	struct argument
-	{
-		static_assert(N < arity, "error: invalid parameter index.");
-		using type = typename call_type::template argument<N + 1>::type;
-	};
-};
-*/
-
 
 
 namespace mtl
