@@ -15,25 +15,18 @@ namespace mtl
 
 
 	template<typename Stream, typename Proxy>
-	class function_mapper_proxy
+	class function_mapper_proxy : public Proxy
 	{
 
 	public:
 		using ProxyCallback = std::function<void(Stream& ret)>;
 
 
-
-		void proxy_call(Stream& arg, const ProxyCallback& callback)
-		{
-			_proxy.proxy_call(arg, callback);
-		}
-
-
 		template<typename R>
 		mtl::future<R> call_from_stream(Stream& arg)
 		{
 			auto promise = mtl::promise<R>::create();
-			proxy_call(arg, [=](Stream& ret)
+			Proxy::proxy_call(arg, [=](Stream& ret)
 			{
 				R r;
 				ret >> r;
@@ -47,7 +40,7 @@ namespace mtl
 		mtl::future<void> call_from_stream(Stream& arg)
 		{
 			auto promise = mtl::promise<void>::create();
-			proxy_call(arg, [=](Stream& ret)
+			Proxy::proxy_call(arg, [=](Stream& ret)
 			{
 				promise->set_value();
 			});
@@ -56,9 +49,8 @@ namespace mtl
 		}
 
 
-		auto& proxy() { return _proxy; }
+		auto& proxy() { return (Proxy&)*this; }
 	protected:
-		Proxy _proxy;
 	};
 
 }

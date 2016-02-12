@@ -6,6 +6,7 @@
 #include <functional>
 #include <vector>
 #include <memory>
+#include <array>
 
 namespace mtl
 {
@@ -48,17 +49,15 @@ namespace mtl
 
 		void add_stream(const channel_pointer& channel)
 		{
-			channel->assign_id(this, channel.size());
+			channel->assign_id(this, _channels.size());
 			_channels.push_back(channel);
 		}
 
 
 	protected:
 		virtual void send_stream(id_type id, Stream& ss) = 0;
-		void receive_stream(Stream& ss)
+		void receive_stream(id_type id, Stream& ss)
 		{
-			id_type id;
-			ss >> id;
 			if (id < _channels.size())
 				_channels[id]->received_stream(ss);
 		}
@@ -67,6 +66,34 @@ namespace mtl
 		
 		std::vector<channel_pointer> _channels;
 	};
+
+
+	namespace test
+	{
+		template<typename Stream>
+		struct local_stream_sender
+		{
+			local_stream_sender()
+			{
+				_streams[0].other_stream = &(_streams[1]);
+				_streams[1].other_stream = &(_streams[0]);
+			}
+
+			auto& streams() { return _streams; }
+		protected:
+			struct bound_stream : public stream_channel_demuxer<Stream>
+			{
+				void send_stream(id_type id, Stream& ss)
+				{
+					other_stream->receive_stream(id, ss);
+				}
+				
+				bound_stream *other_stream = nullptr;
+			};
+
+			std::array<bound_stream, 2> _streams;
+		};
+	}
 
 }
 

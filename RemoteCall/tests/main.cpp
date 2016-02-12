@@ -58,6 +58,8 @@ namespace mtl
 		void proxy_call(Stream& arg, const ProxyCallback& callback)
 		{
 			std::lock_guard<std::mutex> lock(_mutex);
+			//problem - we would need to add magic number & id BEFORE args in Stream
+
 			auto id = _last_id++;
 			arg << _magic_number;
 			arg << id;
@@ -79,16 +81,66 @@ namespace mtl
 			request_id_type id;
 			ss >> id;
 
-			std::lock_guard<std::mutex> lock(_mutex);
+			ProxyCallback callback;
+			{
+				std::lock_guard<std::mutex> lock(_mutex);
+				auto it = _requests.find(id);
+				if (it == _requests.end())
+					return;
+				callback = it->second;
+				_requests.erase(it);
+			}
+			callback(ss);
 		}
 
-
-		auto& mapper() { return _mapper; }
 	protected:
 		constexpr static request_id_type _magic_number = 0xFF003200;
 		request_id_type _last_id = 0;
 		std::mutex _mutex;
 		RequestMap _requests;
+	};
+
+
+	template<typename Stream, typename FunctionID = std::string>
+	class function_mapper_channel_proxy_receiver : public stream_channel<Stream>
+	{
+	public:
+		using request_id_type = uint32_t;
+		using ProxyCallback = std::function<void(Stream& ss)>;
+
+		void received_stream(Stream& ss) override
+		{
+			request_id_type number;
+			ss >> number;
+			if (number != _magic_number)
+			{
+				assert(false);
+				return;
+			}
+
+			Stream out;
+			request_id_type id;
+			ss >> id;
+
+			out << _magic_number;
+			out << id;
+
+			{
+				std::lock_guard<std::mutex> lock(_mutex);
+				_mapper.call_from_stream_out(ss, out);
+			}
+
+			send_stream(out);
+		}
+
+
+		auto& mapper() { return _mapper; }
+	protected:
+		using mapper_type = function_mapper<Stream, FunctionID>;
+
+		constexpr static request_id_type _magic_number = 0xFF003200;
+		std::mutex _mutex;
+		mapper_type _mapper;
 	};
 }
 
@@ -116,9 +168,24 @@ int main (int argc, char * argv[])
 	//
 	//In the end, you get your mtl::future<R> from stream provided by Proxy
 
+
+	mtl::test::local_stream_sender<mtl::binary_stream> local;
+
+
 	using Proxy = mtl::function_mapper_channel_proxy<mtl::binary_stream>;
-	mtl::function_mapper_proxy<mtl::binary_stream, Proxy> functions;
-	//functions.proxy().mapper().add_function("add", add);
+	using mapper_type = mtl::function_mapper_proxy<mtl::binary_stream, Proxy>;
+	auto functions = std::make_shared<mapper_type>();
+
+	local.streams()[0].add_stream(functions);
+
+	{
+		using receiver_mapper_type = mtl::function_mapper_channel_proxy_receiver<mtl::binary_stream>;
+		auto receiver = std::make_shared<receiver_mapper_type>();
+		receiver->mapper().add_function("add", add);
+
+		local.streams()[1].add_stream(receiver);
+	}
+
 
 	
 	using acceptor = mtl::remote::context_caller_mapper_proxy_acceptor<mtl::binary_stream, Proxy>;
