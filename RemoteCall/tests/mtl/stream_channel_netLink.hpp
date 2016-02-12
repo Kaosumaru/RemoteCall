@@ -35,6 +35,7 @@ namespace mtl
 
 				//Define a callback, fired when a sockets state changes
 				_manager.onStatusChange = [](manager* manager, std::shared_ptr<socket> socket, socket::Status prev) {
+					
 					::netLink::MsgPackSocket& msgPackSocket = *static_cast<::netLink::MsgPackSocket*>(socket.get());
 
 					switch (socket->getStatus()) {
@@ -55,6 +56,9 @@ namespace mtl
 
 				//Define a callback, fired when a socket receives data
 				_manager.onReceiveMsgPack = [&](manager* manager, std::shared_ptr<socket> socket, std::unique_ptr<MsgPack::Element> element) {
+					::netLink::MsgPackSocket& msgPackSocket = *static_cast<::netLink::MsgPackSocket*>(socket.get());
+					auto guard = context<::netLink::MsgPackSocket>::lock(msgPackSocket);
+					
 					//hostRemote and portRemote are now set to the origin of the last received message
 					std::cout << "Received data from " << socket->hostRemote << ":" << socket->portRemote << ": " << *element << std::endl;
 
@@ -98,7 +102,7 @@ namespace mtl
 
 			void send_stream(id_type id, Stream& ss) override
 			{
-				auto& msgPackSocket = *static_cast<::netLink::MsgPackSocket*>(_socket.get());
+				auto& msgPackSocket = !_server ? *static_cast<::netLink::MsgPackSocket*>(_socket.get()) : context<::netLink::MsgPackSocket>::current();
 
 				msgPackSocket << MsgPack__Factory(ArrayHeader(2));
 				msgPackSocket << MsgPack::Factory((uint64_t)id);
