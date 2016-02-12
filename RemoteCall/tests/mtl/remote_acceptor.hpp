@@ -4,7 +4,7 @@
 #include <string>
 #include "context.hpp"
 #include "stream_caller_mapper.hpp"
-#include "stream_caller_mapper_async.hpp"
+#include "stream_caller_mapper_proxy.hpp"
 
 
 namespace mtl
@@ -34,10 +34,10 @@ namespace mtl
 
 		
 		//WIP
-		template<typename Stream, typename FunctionID = std::string>
+		template<typename Stream, typename Proxy >
 		struct context_caller_mapper_async_acceptor
 		{
-			using mapper = function_mapper_async_proxy< Stream, FunctionID >;
+			using mapper = function_mapper_proxy< Stream, Proxy >;
 			using stream_context = context< mapper >;
 
 			template<typename R>

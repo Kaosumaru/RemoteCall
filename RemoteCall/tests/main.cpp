@@ -39,6 +39,31 @@ public:
 
 
 
+namespace mtl
+{
+	template<typename Stream, typename FunctionID = std::string>
+	class function_mapper_thread_proxy
+	{
+	public:
+		using ProxyCallback = std::function<void(Stream& ss)>;
+
+		void proxy_call(Stream& arg, const ProxyCallback& callback)
+		{
+			Stream ret;
+			_mapper.call_from_stream_out(arg, ret);
+			callback(ret);
+		}
+
+
+		auto& mapper() { return _mapper; }
+	protected:
+		using mapper_type = function_mapper<Stream, FunctionID>;
+
+		mapper_type _mapper;
+	};
+}
+
+
 
 
 
@@ -51,25 +76,23 @@ int add(int a, int b)
 
 
 
+
 int main (int argc, char * argv[])
 {
+	//in short:
+	//- endpoint is used to configure remote function
+    //- function creates strem from arguments, and sends it to acceptor, and returns data from acceptor. context_caller_mapper_proxy_acceptor sends stream to current function_mapper_proxy
+	//- function_mapper_proxy gets args, and return future<R> with result of call (internally uses Proxy to do the work besides that)
+	//- Proxy is resposible for sending arg stream, and return ret stream when done
+	//
+	//In the end, you get your mtl::future<R> from stream provided by Proxy
 
-	auto p = mtl::promise<void>::create();
-	p->set_value();
-	p->get_future().then([]()
-	{
-
-	});
-
-	
-
-	return 0;
-	//register_reflection<Test>;
-	mtl::function_mapper_async_proxy<mtl::binary_stream> functions;
-	functions.add_function("add", add);
+	using Proxy = mtl::function_mapper_thread_proxy<mtl::binary_stream>;
+	mtl::function_mapper_proxy<mtl::binary_stream, Proxy> functions;
+	functions.proxy().mapper().add_function("add", add);
 
 	
-	using acceptor = mtl::remote::context_caller_mapper_async_acceptor<mtl::binary_stream>;
+	using acceptor = mtl::remote::context_caller_mapper_proxy_acceptor<mtl::binary_stream, Proxy>;
 	using endpoint = mtl::remote::endpoint<mtl::binary_stream, std::string, acceptor>;
 
 
@@ -78,7 +101,9 @@ int main (int argc, char * argv[])
 	
 	auto l = acceptor::stream_context::lock(functions);
 	auto f = remote_add(1, 2);
-	f.then([](int &a) {});
+	f.then([](int &a) 
+	{
+	});
 
 
 
