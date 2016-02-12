@@ -41,6 +41,11 @@ namespace mtl
 			_ss.read(s, n);
 			return *this;
 		}
+
+		auto str()
+		{
+			return _ss.str();
+		}
 	private:
 		std::stringstream _ss;
 	};
