@@ -13,9 +13,28 @@ namespace mtl
 
 	namespace impl
 	{
-
 		template<typename T>
-		class promise_base : public std::enable_shared_from_this<promise_base<T>>
+		struct default_executor
+		{
+			using callback = std::function<void(T&)>;
+			void operator() (const callback& c, T& t)
+			{
+				c(t);
+			}
+		};
+
+		template<>
+		struct default_executor<void>
+		{
+			using callback = std::function<void(void)>;
+			void operator() (const callback& c)
+			{
+				c();
+			}
+		};
+
+		template<typename T, typename Executor = default_executor<T>>
+		class promise_base : public std::enable_shared_from_this<promise_base<T>>, protected Executor
 		{
 		protected:
 			template<typename T>
@@ -33,7 +52,7 @@ namespace mtl
 				_done = true;
 				_t = t;
 				for (auto &c : _callbacks)
-					c(_t);
+					Executor::operator()(c, _t);
 			}
 
 			void set_value(T&& t)
@@ -42,7 +61,7 @@ namespace mtl
 				_done = true;
 				_t = std::move(t);
 				for (auto &c : _callbacks)
-					c(_t);
+					Executor::operator()(c, _t);
 			}
 
 		protected:
@@ -53,7 +72,7 @@ namespace mtl
 				std::lock_guard<std::mutex> guard(_callbacks_mutex);
 				if (_done)
 				{
-					c(_t);
+					Executor::operator()(c, _t);
 					return;
 				}
 				_callbacks.push_back(c);
@@ -65,8 +84,8 @@ namespace mtl
 			std::vector<callback> _callbacks;
 		};
 
-		template<>
-		class promise_base<void> : public std::enable_shared_from_this<promise_base<void>>
+		template< typename Executor >
+		class promise_base<void, Executor> : public std::enable_shared_from_this<promise_base<void>>, protected Executor
 		{
 		protected:
 			template<typename T>
@@ -82,7 +101,7 @@ namespace mtl
 				std::lock_guard<std::mutex> guard(_callbacks_mutex);
 				_done = true;
 				for (auto &c : _callbacks)
-					c();
+					Executor::operator()(c);
 			}
 
 		protected:
@@ -93,7 +112,7 @@ namespace mtl
 				std::lock_guard<std::mutex> guard(_callbacks_mutex);
 				if (_done)
 				{
-					c();
+					Executor::operator()(c);
 					return;
 				}
 				_callbacks.push_back(c);
