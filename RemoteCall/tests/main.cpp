@@ -73,12 +73,9 @@ namespace mtl
 			//replacing header in stream - stream should created by us in create_stream
 			{
 				auto pp = arg.tellp();
-				//auto pg = arg.tellg();
 				arg.seekp(0);
-				//arg.seekg(0);
 				arg << id;
 				arg.seekp(pp);
-				//arg.seekg(pg);
 			}
 
 			_requests[id] = callback;
