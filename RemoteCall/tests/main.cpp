@@ -70,7 +70,8 @@ namespace mtl
 
 			auto id = _last_id++;
 
-			//replacing header in stream - stream should created by us in create_stream
+			//replacing header in stream - stream should be created by us in create_stream
+			//so we are replacing first _magic_number
 			{
 				auto pp = arg.tellp();
 				arg.seekp(0);
