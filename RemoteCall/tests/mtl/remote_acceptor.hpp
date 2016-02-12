@@ -3,8 +3,8 @@
 
 #include <string>
 #include "context.hpp"
-#include "stream_caller_mapper.hpp"
-#include "stream_caller_mapper_proxy.hpp"
+#include "mappers/stream_caller_mapper.hpp"
+#include "mappers/stream_caller_mapper_proxy.hpp"
 
 
 namespace mtl
