@@ -10,6 +10,26 @@ namespace mtl
 	{
 	public:
 
+		void seekp(std::streampos p)
+		{
+			_ss.seekp(p);
+		}
+
+		std::streampos tellp()
+		{
+			return _ss.tellp();
+		}
+
+		void seekg(std::streampos p)
+		{
+			_ss.seekg(p);
+		}
+
+		std::streampos tellg()
+		{
+			return _ss.tellg();
+		}
+
 		binary_stream& write(const char* s, std::streamsize n)
 		{
 			_ss.write(s, n);
