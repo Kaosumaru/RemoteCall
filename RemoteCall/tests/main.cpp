@@ -55,14 +55,32 @@ namespace mtl
 
 		using RequestMap = std::map<request_id_type, ProxyCallback>;
 
+		Stream create_stream()
+		{
+			Stream arg;
+			arg << _magic_number;
+			arg << _magic_number;
+			return arg;
+		}
+
 		void proxy_call(Stream& arg, const ProxyCallback& callback)
 		{
-			std::lock_guard<std::mutex> lock(_mutex);
-			//problem - we would need to add magic number & id BEFORE args in Stream
+			std::lock_guard<std::recursive_mutex> lock(_mutex);
+			
 
 			auto id = _last_id++;
-			arg << _magic_number;
-			arg << id;
+
+			//replacing header in stream - stream should created by us in create_stream
+			{
+				auto pp = arg.tellp();
+				//auto pg = arg.tellg();
+				arg.seekp(0);
+				//arg.seekg(0);
+				arg << id;
+				arg.seekp(pp);
+				//arg.seekg(pg);
+			}
+
 			_requests[id] = callback;
 			send_stream(arg);
 		}
@@ -70,6 +88,9 @@ namespace mtl
 
 		void received_stream(Stream& ss) override
 		{
+			request_id_type id;
+			ss >> id;
+
 			request_id_type number;
 			ss >> number;
 			if (number != _magic_number)
@@ -78,12 +99,11 @@ namespace mtl
 				return;
 			}
 
-			request_id_type id;
-			ss >> id;
+
 
 			ProxyCallback callback;
 			{
-				std::lock_guard<std::mutex> lock(_mutex);
+				std::lock_guard<std::recursive_mutex> lock(_mutex);
 				auto it = _requests.find(id);
 				if (it == _requests.end())
 					return;
@@ -95,8 +115,8 @@ namespace mtl
 
 	protected:
 		constexpr static request_id_type _magic_number = 0xFF003200;
-		request_id_type _last_id = 0;
-		std::mutex _mutex;
+		request_id_type _last_id = 1;
+		std::recursive_mutex _mutex;
 		RequestMap _requests;
 	};
 
@@ -110,6 +130,9 @@ namespace mtl
 
 		void received_stream(Stream& ss) override
 		{
+			request_id_type id;
+			ss >> id;
+
 			request_id_type number;
 			ss >> number;
 			if (number != _magic_number)
@@ -119,14 +142,12 @@ namespace mtl
 			}
 
 			Stream out;
-			request_id_type id;
-			ss >> id;
 
-			out << _magic_number;
 			out << id;
+			out << _magic_number;
 
 			{
-				std::lock_guard<std::mutex> lock(_mutex);
+				std::lock_guard<std::recursive_mutex> lock(_mutex);
 				_mapper.call_from_stream_out(ss, out);
 			}
 
@@ -139,7 +160,7 @@ namespace mtl
 		using mapper_type = function_mapper<Stream, FunctionID>;
 
 		constexpr static request_id_type _magic_number = 0xFF003200;
-		std::mutex _mutex;
+		std::recursive_mutex _mutex;
 		mapper_type _mapper;
 	};
 }
@@ -171,13 +192,14 @@ int main (int argc, char * argv[])
 
 	mtl::test::local_stream_sender<mtl::binary_stream> local;
 
-
+	//proxy at sender
 	using Proxy = mtl::function_mapper_channel_proxy<mtl::binary_stream>;
 	using mapper_type = mtl::function_mapper_proxy<mtl::binary_stream, Proxy>;
 	auto functions = std::make_shared<mapper_type>();
-
 	local.streams()[0].add_stream(functions);
 
+
+	//mapper at receiver
 	{
 		using receiver_mapper_type = mtl::function_mapper_channel_proxy_receiver<mtl::binary_stream>;
 		auto receiver = std::make_shared<receiver_mapper_type>();
@@ -187,31 +209,20 @@ int main (int argc, char * argv[])
 	}
 
 
-	
+	//using endpoint
 	using acceptor = mtl::remote::context_caller_mapper_proxy_acceptor<mtl::binary_stream, Proxy>;
 	using endpoint = mtl::remote::endpoint<mtl::binary_stream, std::string, acceptor>;
 
 
 	endpoint::function<int(int, int)> remote_add = { "add" };
 	
-	
+	//locking proxy sender
 	auto l = acceptor::stream_context::lock(functions);
 	auto f = remote_add(1, 2);
 	f.then([](int &a) 
 	{
 	});
 
-
-
-
-	
-	/*
-	stringstream ss;
-	ss << std::quoted("add") << 1 << " " << 2;
-
-
-	functions.call_from_stream(ss);
-	*/
 
 	return 0;
 }

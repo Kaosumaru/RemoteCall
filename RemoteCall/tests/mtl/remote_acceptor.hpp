@@ -17,6 +17,12 @@ namespace mtl
 			using mapper = function_mapper< Stream, FunctionID >;
 			using stream_context = context< mapper >;
 
+
+			static Stream create_stream()
+			{
+				return{};
+			}
+
 			template<typename R>
 			static R accept_stream(Stream &ss)
 			{
@@ -39,6 +45,13 @@ namespace mtl
 		{
 			using mapper = function_mapper_proxy< Stream, Proxy >;
 			using stream_context = context< mapper >;
+
+
+			static Stream create_stream()
+			{
+				auto &current = stream_context::current();
+				return current.create_stream();
+			}
 
 			template<typename R>
 			static mtl::future<R> accept_stream(Stream &ss)

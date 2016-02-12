@@ -48,12 +48,19 @@ namespace mtl
 
 
 	template <typename Stream, typename... Args>
-	Stream arguments_to_stream(Args&&... args)
+	Stream& add_arguments_to_stream(Stream& ss, Args&&... args)
 	{
-		Stream ss;
 		auto fill_args = {
 			0, ((ss << std::forward<Args>(args)), 0)...
 		};
+		return ss;
+	}
+
+	template <typename Stream, typename... Args>
+	Stream arguments_to_stream(Args&&... args)
+	{
+		Stream ss;
+		add_arguments_to_stream(std::forward<Args>(args)...);
 		return ss;
 	}
 

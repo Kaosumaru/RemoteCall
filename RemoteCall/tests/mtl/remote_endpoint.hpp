@@ -14,6 +14,11 @@ namespace mtl
 		struct dummy_acceptor
 		{
 
+			static Stream create_stream()
+			{
+				return{};
+			}
+
 			template<typename R>
 			static R accept_stream(Stream &ss)
 			{
@@ -48,7 +53,8 @@ namespace mtl
 
 				ReturnType operator() (Args... args)
 				{
-					auto stream = arguments_to_stream<Stream>(_id, std::forward<Args>(args)...);
+					auto stream = Acceptor::create_stream();
+					add_arguments_to_stream<Stream>(stream, _id, std::forward<Args>(args)...);
 					return Acceptor::template accept_stream<R>(stream);
 				}
 			private:

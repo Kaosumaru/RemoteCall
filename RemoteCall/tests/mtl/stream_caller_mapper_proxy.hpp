@@ -21,6 +21,10 @@ namespace mtl
 	public:
 		using ProxyCallback = std::function<void(Stream& ret)>;
 
+		Stream create_stream()
+		{
+			return Proxy::create_stream();
+		}
 
 		template<typename R>
 		mtl::future<R> call_from_stream(Stream& arg)
