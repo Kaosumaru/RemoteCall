@@ -11,6 +11,8 @@
 #include "mtl/mappers/stream_caller_mapper_channel_proxy.hpp"
 #include <sstream>
 
+#include "mtl/stream_channel_netLink.hpp"
+
 
 #ifndef _MSC_VER
 #define lest_FEATURE_COLOURISE 1
@@ -80,11 +82,11 @@ struct default_caller_proxy
 };
 
 
-int main (int argc, char * argv[])
+void test1()
 {
 	//in short:
 	//- endpoint is used to configure remote function
-    //- function creates strem from arguments, and sends it to acceptor, and returns data from acceptor. context_caller_mapper_proxy_acceptor sends stream to current function_mapper_proxy
+	//- function creates strem from arguments, and sends it to acceptor, and returns data from acceptor. context_caller_mapper_proxy_acceptor sends stream to current function_mapper_proxy
 	//- function_mapper_proxy gets args, and return future<R> with result of call (internally uses Proxy to do the work besides that)
 	//- Proxy is resposible for sending arg stream, and return ret stream when done
 	//
@@ -93,11 +95,11 @@ int main (int argc, char * argv[])
 
 
 	mtl::test::local_stream_sender<mtl::binary_stream> local;
-	
+
 
 	//proxy at sender
 	auto functions = default_caller_proxy::create_sending_channel();
-	local.streams()[0].add_stream(functions);
+	local.streams()[0].add_channel(functions);
 
 
 	//mapper at receiver
@@ -105,7 +107,7 @@ int main (int argc, char * argv[])
 		auto receiver = default_caller_proxy::create_receiving_channel();
 		receiver->mapper().add_function("add", add);
 
-		local.streams()[1].add_stream(receiver);
+		local.streams()[1].add_channel(receiver);
 	}
 
 
@@ -114,13 +116,67 @@ int main (int argc, char * argv[])
 	using stream_context = default_caller_proxy::stream_context;
 
 	endpoint::function<int(int, int)> remote_add = { "add" };
-	
+
 	//locking proxy sender
 	auto l = stream_context::lock(functions);
 	auto f = remote_add(1, 2);
-	f.then([](int &a) 
+	f.then([](int &a)
 	{
 	});
+}
+
+
+void test2()
+{
+#ifdef WIN32
+	netLink::init();
+#endif
+	using namespace std::chrono;
+
+	mtl::netLink::stream_sender<mtl::binary_stream> server("127.0.0.1", 6987, true);
+	{
+		auto receiver = default_caller_proxy::create_receiving_channel();
+		receiver->mapper().add_function("add", add);
+
+		server.add_channel(receiver);
+	}
+	server.start_listening();
+	std::this_thread::sleep_for(500ms);
+	
+
+	mtl::netLink::stream_sender<mtl::binary_stream> client("127.0.0.1", 6987);
+	
+	auto functions = default_caller_proxy::create_sending_channel();
+	client.add_channel(functions);
+	client.start_listening();
+	std::this_thread::sleep_for(500ms);
+	
+	
+	
+
+
+	//using endpoint
+	using endpoint = default_caller_proxy::endpoint;
+	using stream_context = default_caller_proxy::stream_context;
+
+	endpoint::function<int(int, int)> remote_add = { "add" };
+
+	//locking proxy sender
+	auto l = stream_context::lock(functions);
+	auto f = remote_add(1, 2);
+	f.then([](int &a)
+	{
+	});
+
+
+
+	std::this_thread::sleep_for(30s);
+}
+
+
+int main (int argc, char * argv[])
+{
+	test2();
 
 
 	return 0;

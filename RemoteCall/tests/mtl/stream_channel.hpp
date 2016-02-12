@@ -47,7 +47,7 @@ namespace mtl
 		using channel = stream_channel<Stream>;
 		using channel_pointer = std::shared_ptr<channel>;
 
-		void add_stream(const channel_pointer& channel)
+		void add_channel(const channel_pointer& channel)
 		{
 			channel->assign_id(this, _channels.size());
 			_channels.push_back(channel);
