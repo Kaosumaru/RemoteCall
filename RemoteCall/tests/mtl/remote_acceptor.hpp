@@ -37,11 +37,6 @@ namespace mtl
 				current.call_from_stream_void(ss);
 			}
 
-			template<typename R>
-			struct TransformType
-			{
-				using type = R;
-			};
 		};
 
 		
@@ -51,18 +46,6 @@ namespace mtl
 		{
 			using mapper = function_mapper_proxy< Stream, Proxy >;
 			using stream_context = context< mapper >;
-
-			template<typename R>
-			struct TransformType
-			{
-				using type = R;
-			};
-
-			template<typename R>
-			struct TransformType<R*>
-			{
-				using type = typename class_traits<R>::pointer_type;
-			};
 
 			static Stream create_stream()
 			{

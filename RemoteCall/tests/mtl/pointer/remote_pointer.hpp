@@ -30,7 +30,6 @@ namespace mtl
 		};
 		
 
-
 		template<typename T>
 		struct class_traits
 		{
@@ -39,8 +38,29 @@ namespace mtl
 
 
 
+		template<typename R>
+		struct TransformType
+		{
+			using type = R;
+		};
 
+		template<typename R>
+		struct TransformType<R*>
+		{
+			using type = typename class_traits<R>::pointer_type;
+		};
 
+		template<typename T>
+		T& unwrap_type(T& t)
+		{
+			return t;
+		}
+
+		template<typename T>
+		T unwrap_type(const raw_pointer_unsafe<T>& t)
+		{
+			return t;
+		}
 
 
 

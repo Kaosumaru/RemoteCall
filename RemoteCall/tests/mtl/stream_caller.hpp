@@ -35,7 +35,8 @@ namespace mtl
 					0, ((s >> std::get<Is>(args)), 0)...
 				};
 
-				return f(std::get<Is>(args)...);
+				//unwrap_type transforms remote_pointers into pointers (this can throw if pointer is invalid)
+				return f(remote::unwrap_type(std::get<Is>(args))...);
 			}
 		};
 	}

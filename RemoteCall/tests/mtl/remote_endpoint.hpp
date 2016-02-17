@@ -71,7 +71,7 @@ namespace mtl
 			};
 
 			template<typename R, typename... Args>
-			struct function<R(Args...)> : public function_impl<R, typename Acceptor::template TransformType<Args>::type...>
+			struct function<R(Args...)> : public function_impl<R, typename TransformType<Args>::type...>
 			{
 				using function_impl<R, Args...>::function_impl;
 
