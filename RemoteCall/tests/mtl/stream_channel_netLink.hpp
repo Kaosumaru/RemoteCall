@@ -73,7 +73,7 @@ namespace mtl
 					if (!element_id || !element_stream)
 						return;
 
-					id_type id = element_id->getValue<uint64_t>();
+					id_type id = (id_type)element_id->getValue<uint64_t>();
 					Stream ss;
 					ss.write( element_stream->getData(), element_stream->getLength() );
 					

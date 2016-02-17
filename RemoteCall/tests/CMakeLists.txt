@@ -20,6 +20,7 @@ endif(MSVC)
 add_folder(mtl)
 add_folder(mtl/lockless)
 add_folder(mtl/mappers)
+add_folder(mtl/pointer)
 
 add_executable (Tests main.cpp ${SRCS})
 target_link_libraries(Tests ${CONAN_LIBS})
