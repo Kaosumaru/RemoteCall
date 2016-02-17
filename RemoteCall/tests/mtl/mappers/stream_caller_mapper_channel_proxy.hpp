@@ -19,6 +19,14 @@ namespace mtl
 
 		using RequestMap = std::map<request_id_type, ProxyCallback>;
 
+
+		enum class ResponseType : uint8_t
+		{ 
+			valid = 0, 
+			std_exception, 
+			generic_exception 
+		};
+
 		Stream create_stream()
 		{
 			Stream arg;
@@ -61,7 +69,8 @@ namespace mtl
 				return;
 			}
 
-
+			ResponseType type = ResponseType::valid;
+			ss >> (uint8_t&)type;
 
 			ProxyCallback callback;
 			{
@@ -72,7 +81,18 @@ namespace mtl
 				callback = it->second;
 				_requests.erase(it);
 			}
-			callback(ss);
+
+			if (type == ResponseType::valid)
+			{
+				callback(ss);
+				return;
+			}
+
+			std::string exc_message;
+			ss >> exc_message;
+			//TODO send this error to callback
+			assert(false);
+			
 		}
 
 	protected:
@@ -87,6 +107,7 @@ namespace mtl
 	class function_mapper_channel_proxy_receiver : public stream_channel<Stream>
 	{
 	public:
+		using ResponseType = typename function_mapper_channel_proxy<Stream, FunctionID>::ResponseType;
 		using request_id_type = uint32_t;
 		using ProxyCallback = std::function<void(Stream& ss)>;
 
@@ -103,17 +124,48 @@ namespace mtl
 				return;
 			}
 
+			ResponseType type = ResponseType::valid;
+			std::string exc_message;
+
 			Stream out;
-
-			out << id;
-			out << _magic_number;
-
+			try
 			{
+				out << id;
+				out << _magic_number;
+				out << (uint8_t)type;
+
 				std::lock_guard<std::recursive_mutex> lock(_mutex);
 				_mapper.call_from_stream_out(ss, out);
 			}
+			catch (std::exception& exc)
+			{
+				type = ResponseType::std_exception;
+				exc_message = exc.what();
+			}
+			catch (...)
+			{
+				type = ResponseType::generic_exception;
+			}
 
+			static_assert(sizeof(uint8_t) == sizeof(ResponseType), "ResponseType is not what we expect");
+
+			
+
+			if (type != ResponseType::valid)
+			{
+				Stream exc_out;
+
+				exc_out << id;
+				exc_out << _magic_number;
+				exc_out << (uint8_t)type;
+				exc_out << exc_message;
+				send_stream(exc_out);
+				return;
+			}
+
+			
 			send_stream(out);
+
 		}
 
 
