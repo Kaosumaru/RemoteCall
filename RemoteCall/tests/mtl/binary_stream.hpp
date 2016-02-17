@@ -82,7 +82,7 @@ mtl::binary_stream& operator >> (mtl::binary_stream& ss, std::string& t)
 	return ss;
 }
 
-mtl::binary_stream& operator << (mtl::binary_stream& ss, std::string& t)
+mtl::binary_stream& operator << (mtl::binary_stream& ss, const std::string& t)
 {
 	std::size_t size = t.size();
 	ss << size;
@@ -99,5 +99,22 @@ mtl::binary_stream& operator << (mtl::binary_stream& ss, const char* str)
 	return ss;
 }
 
+//sort of wrong place for it, but it will stand for now
+//remote pointers
+template<typename Stream, typename T>
+Stream& operator >> (Stream& ss, mtl::remote::raw_pointer_unsafe<T>& t)
+{
+	uint64_t p;
+	ss >> p;
+	t.set(p);
+	return ss;
+}
+
+template<typename Stream, typename T>
+Stream& operator << (Stream& ss, const mtl::remote::raw_pointer_unsafe<T>& t)
+{
+	ss << t.get();
+	return ss;
+}
 
 #endif

@@ -30,27 +30,28 @@ namespace mtl
 			{
 				return;
 			}
+
+
+			template<typename R>
+			struct TransformType
+			{
+				using type = R;
+			};
 		};
 
 
 		template<typename Stream, typename FunctionID = std::string, typename Acceptor = dummy_acceptor<Stream, FunctionID> >
 		struct endpoint
 		{
-
-
-			template<typename T>
-			struct function
-			{
-
-			};
-
+		protected:
 			template<typename R, typename... Args>
-			struct function<R(Args...)>
+			struct function_impl
 			{
-				function(const FunctionID& id) : _id(id) {}
+				function_impl(const FunctionID& id) : _id(id) {}
 
 				using ReturnType = decltype(Acceptor::template accept_stream<R>(Stream{}));
 
+				//
 				ReturnType operator() (Args... args)
 				{
 					auto stream = Acceptor::create_stream();
@@ -60,6 +61,23 @@ namespace mtl
 			private:
 				FunctionID _id;
 			};
+		public:
+
+
+			template<typename T>
+			struct function
+			{
+
+			};
+
+			template<typename R, typename... Args>
+			struct function<R(Args...)> : public function_impl<R, typename Acceptor::template TransformType<Args>::type...>
+			{
+				using function_impl<R, Args...>::function_impl;
+
+			};
+
+
 
 		};
 	}

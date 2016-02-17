@@ -8,6 +8,7 @@
 #include "../stream_caller.hpp"
 #include "../context.hpp"
 #include "../future.hpp"
+#include "../pointer/remote_pointer.hpp"
 
 namespace mtl
 {

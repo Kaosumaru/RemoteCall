@@ -5,7 +5,7 @@
 #include "context.hpp"
 #include "mappers/stream_caller_mapper.hpp"
 #include "mappers/stream_caller_mapper_proxy.hpp"
-
+#include "pointer/remote_pointer.hpp"
 
 namespace mtl
 {
@@ -36,6 +36,12 @@ namespace mtl
 				auto &current = stream_context::current();
 				current.call_from_stream_void(ss);
 			}
+
+			template<typename R>
+			struct TransformType
+			{
+				using type = R;
+			};
 		};
 
 		
@@ -46,6 +52,17 @@ namespace mtl
 			using mapper = function_mapper_proxy< Stream, Proxy >;
 			using stream_context = context< mapper >;
 
+			template<typename R>
+			struct TransformType
+			{
+				using type = R;
+			};
+
+			template<typename R>
+			struct TransformType<R*>
+			{
+				using type = typename class_traits<R>::pointer_type;
+			};
 
 			static Stream create_stream()
 			{
@@ -54,11 +71,13 @@ namespace mtl
 			}
 
 			template<typename R>
-			static mtl::future<R> accept_stream(Stream &ss)
+			static mtl::future<typename TransformType<R>::type > accept_stream(Stream &ss)
 			{
 				auto &current = stream_context::current();
-				return current.call_from_stream<R>(ss);
+				return current.call_from_stream<typename TransformType<R>::type>(ss);
 			}
+
+
 		};
 
 	}

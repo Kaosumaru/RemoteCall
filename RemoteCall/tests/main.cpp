@@ -3,6 +3,7 @@
 #include "mtl/function_traits.hpp"
 #include "mtl/make_pipe.hpp"
 #include "mtl/mappers/stream_caller_mapper.hpp"
+#include "mtl/pointer/remote_pointer.hpp"
 #include "mtl/remote_endpoint.hpp"
 #include "mtl/remote_acceptor.hpp"
 #include "mtl/future.hpp"
@@ -54,9 +55,41 @@ namespace mtl
 
 using namespace std;
 
+
+struct TestStructPointer
+{
+	int a = 6;
+};
+TestStructPointer _tsp;
+
+TestStructPointer* get_tsp()
+{
+	return &_tsp;
+}
+
+namespace mtl
+{
+	namespace remote
+	{
+		template<>
+		struct class_traits<TestStructPointer>
+		{
+			using pointer_type = raw_pointer_unsafe<TestStructPointer>;
+		};
+	}
+}
+
+
 int add(int a, int b)
 {
 	return a + b;
+}
+
+float my_div(float a, float b)
+{
+	if (b == 0.0f)
+		throw std::exception("b shouldn't be 0");
+	return a / b;
 }
 
 struct default_caller_proxy
@@ -137,6 +170,8 @@ void test2()
 	{
 		auto receiver = default_caller_proxy::create_receiving_channel();
 		receiver->mapper().add_function("add", add);
+		receiver->mapper().add_function("mdiv", my_div);
+		//receiver->mapper().add_function("get_tsp", get_tsp);
 
 		server.add_channel(receiver);
 	}
@@ -160,15 +195,24 @@ void test2()
 	using stream_context = default_caller_proxy::stream_context;
 
 	endpoint::function<int(int, int)> remote_add = { "add" };
+	endpoint::function<float(float, float)> remote_div = { "mdiv" };
+	endpoint::function<TestStructPointer*()> remote_get_tsp = { "get_tsp" };
 
 	//locking proxy sender
 	auto l = stream_context::lock(functions);
+
 	auto f = remote_add(1, 2);
 	f.then([](int &a)
 	{
 	});
 
+	remote_div(3.0f, 2.0f).then([](float &a)
+	{
 
+	});
+
+
+	auto o = remote_get_tsp();
 
 	std::this_thread::sleep_for(30s);
 }

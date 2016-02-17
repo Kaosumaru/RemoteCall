@@ -3,6 +3,7 @@
 
 #include "function_traits.hpp"
 #include <utility>
+#include "pointer/remote_pointer.hpp"
 
 namespace mtl
 {
