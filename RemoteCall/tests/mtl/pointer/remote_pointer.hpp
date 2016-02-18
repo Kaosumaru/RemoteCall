@@ -76,7 +76,7 @@ namespace mtl
 				static raw_pointer_unsafe<IN> wrap_type(IN* t)
 				{
 					raw_pointer_unsafe<IN> p;
-					p.set((uint64_t)&t);
+					p.set((uint64_t)t);
 					return p;
 				}
 
