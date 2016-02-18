@@ -1,10 +1,11 @@
 #ifndef MTL_FUTURE
 #define MTL_FUTURE
 
+#include <iostream>
 #include <memory>
 #include <functional>
-#include <type_traits>
 #include <mutex>
+#include <vector>
 
 namespace mtl
 {
@@ -37,8 +38,8 @@ namespace mtl
 		class promise_base : public std::enable_shared_from_this<promise_base<T>>, protected Executor
 		{
 		protected:
-			template<typename T>
-			friend class mtl::future;
+
+			friend class mtl::future<T>;
 
 			promise_base() {}
 			promise_base(const promise_base& other) = delete; // non construction-copyable
@@ -146,11 +147,13 @@ namespace mtl
 	{
 	public:
 		static std::shared_ptr<promise> create() { return std::make_shared<promise>(); }
-		future<T> get_future() { return future<T>(shared_from_this()); }
+		future<T> get_future() { return future<T>(impl::promise_base<T>::shared_from_this()); }
 	};
 
 
 }
+
+
 
 
 

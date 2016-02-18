@@ -50,17 +50,64 @@ namespace mtl
 			using type = typename class_traits<R>::pointer_type;
 		};
 
-		template<typename T>
-		T& unwrap_type(T& t)
+
+
+		namespace impl
 		{
-			return t;
+			template<typename OUT, typename IN>
+			struct type_wrapper
+			{
+				static const OUT& wrap_type(const IN& t)
+				{
+					return t;
+				}
+
+				static OUT&& wrap_type(IN&& t)
+				{
+					return std::move(t);
+				}
+
+
+			};
+
+			template<typename IN>
+			struct type_wrapper<raw_pointer_unsafe<IN>, IN*>
+			{
+				static raw_pointer_unsafe<IN> wrap_type(IN* t)
+				{
+					raw_pointer_unsafe<IN> p;
+					p.set((uint64_t)&t);
+					return p;
+				}
+
+
+			};
+
+			template<typename IN>
+			struct type_wrapper<IN*, raw_pointer_unsafe<IN>>
+			{
+				static IN* wrap_type(raw_pointer_unsafe<IN> p)
+				{
+					return (IN*)p.get();
+				}
+			};
+
 		}
 
-		template<typename T>
-		T unwrap_type(const raw_pointer_unsafe<T>& t)
+		template<typename OUT, typename IN>
+		OUT unwrap_type(IN t)
 		{
-			return t;
+			return impl::type_wrapper<OUT, IN>::wrap_type(t);
 		}
+
+
+
+		template<typename OUT, typename IN>
+		OUT wrap_type(IN t)
+		{
+			return impl::type_wrapper<OUT, IN>::wrap_type(t);
+		}
+
 
 
 

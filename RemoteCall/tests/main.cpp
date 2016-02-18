@@ -67,6 +67,11 @@ TestStructPointer* get_tsp()
 	return &_tsp;
 }
 
+auto get_a_from_tsp(TestStructPointer* tsp)
+{
+	return tsp->a;
+}
+
 namespace mtl
 {
 	namespace remote
@@ -159,6 +164,15 @@ void test1()
 }
 
 
+//using endpoint
+using endpoint = default_caller_proxy::endpoint;
+using stream_context = default_caller_proxy::stream_context;
+
+endpoint::function<int(int, int)> remote_add = { "add" };
+endpoint::function<float(float, float)> remote_div = { "mdiv" };
+endpoint::function<TestStructPointer*()> remote_get_tsp = { "get_tsp" };
+endpoint::function<int(TestStructPointer*)> remote_get_a_from_tsp = { "get_a_from_tsp" };
+
 void test2()
 {
 #ifdef WIN32
@@ -166,12 +180,32 @@ void test2()
 #endif
 	using namespace std::chrono;
 
+	/*
+	mtl::promise<int> p1;
+	auto f1 = p1.get_future();
+	f1.then([](int &a) 
+	{
+		mtl::promise<int> p2;
+		auto f2 = p2.get_future();
+		f2.then([](auto &a) {});
+	});*/
+
+	{
+		std::function<void(int&)> f1 = [](auto &a)
+		{
+			
+		};
+		std::function<void(int&)> f2 = [](auto &x) {};
+	}
+
+
 	mtl::netLink::stream_sender<mtl::binary_stream> server("127.0.0.1", 6987, true);
 	{
 		auto receiver = default_caller_proxy::create_receiving_channel();
 		receiver->mapper().add_function("add", add);
 		receiver->mapper().add_function("mdiv", my_div);
-		//receiver->mapper().add_function("get_tsp", get_tsp);
+		receiver->mapper().add_function("get_tsp", get_tsp);
+		receiver->mapper().add_function("get_a_from_tsp", get_a_from_tsp);
 
 		server.add_channel(receiver);
 	}
@@ -190,13 +224,7 @@ void test2()
 	
 
 
-	//using endpoint
-	using endpoint = default_caller_proxy::endpoint;
-	using stream_context = default_caller_proxy::stream_context;
 
-	endpoint::function<int(int, int)> remote_add = { "add" };
-	endpoint::function<float(float, float)> remote_div = { "mdiv" };
-	endpoint::function<TestStructPointer*()> remote_get_tsp = { "get_tsp" };
 
 	//locking proxy sender
 	auto l = stream_context::lock(functions);
@@ -204,6 +232,7 @@ void test2()
 	auto f = remote_add(1, 2);
 	f.then([](int &a)
 	{
+		remote_add(1, 2).then([](int &a) {});
 	});
 
 	remote_div(3.0f, 2.0f).then([](float &a)
@@ -211,8 +240,20 @@ void test2()
 
 	});
 
-
+	
 	auto o = remote_get_tsp();
+	o.then([](mtl::remote::raw_pointer_unsafe<TestStructPointer> &p) //strangely, auto &p doesn't work
+	{
+		auto fx = remote_get_a_from_tsp(p);
+
+		fx.then([](int &a)
+		{
+		});
+
+	});
+	
+
+
 
 	std::this_thread::sleep_for(30s);
 }

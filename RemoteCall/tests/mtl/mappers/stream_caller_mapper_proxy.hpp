@@ -21,6 +21,7 @@ namespace mtl
 
 	public:
 		using ProxyCallback = std::function<void(Stream& ret)>;
+		using stream_context = context< function_mapper_proxy<Stream, Proxy> >;
 
 		Stream create_stream()
 		{
@@ -33,6 +34,7 @@ namespace mtl
 			auto promise = mtl::promise<R>::create();
 			Proxy::proxy_call(arg, [=](Stream& ret)
 			{
+				auto l = stream_context::lock(this);
 				R r;
 				ret >> r;
 				promise->set_value(r);
@@ -47,6 +49,7 @@ namespace mtl
 			auto promise = mtl::promise<void>::create();
 			Proxy::proxy_call(arg, [=](Stream& ret)
 			{
+				auto l = stream_context::lock(this);
 				promise->set_value();
 			});
 

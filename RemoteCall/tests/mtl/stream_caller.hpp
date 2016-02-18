@@ -18,25 +18,29 @@ namespace mtl
 		template<typename Stream, typename R, typename ...Args>
 		struct stream_caller<Stream, R(Args...)>
 		{
-			using ReturnType = R;
+			using ReturnType = typename remote::TransformType<R>::type; //= R; 
 
 			template<typename Callable>
-			R Call(Stream &s, const Callable& f)
+			ReturnType Call(Stream &s, const Callable& f)
 			{
 				return CallImpl(s, f, std::index_sequence_for<Args...>());
 			}
 
 		protected:
+			//TODO perhaps that should be dependant on stream?
+			template<typename T>
+			using TransformTypeCallType = typename remote::TransformType<typename std::decay<T>::type>::type; // = typename std::decay<T>::type;
+
 			template<typename Callable, std::size_t... Is>
-			R CallImpl(Stream &s, const Callable& f, std::index_sequence<Is...>)
+			ReturnType CallImpl(Stream &s, const Callable& f, std::index_sequence<Is...>)
 			{
-				std::tuple<typename std::decay<Args>::type...> args;
+				std::tuple< TransformTypeCallType<Args>... > args;
 				auto fill_args = {
 					0, ((s >> std::get<Is>(args)), 0)...
 				};
 
 				//unwrap_type transforms remote_pointers into pointers (this can throw if pointer is invalid)
-				return f(remote::unwrap_type(std::get<Is>(args))...);
+				return remote::wrap_type<ReturnType>(f(remote::unwrap_type<Args>(std::get<Is>(args))...));
 			}
 		};
 	}
