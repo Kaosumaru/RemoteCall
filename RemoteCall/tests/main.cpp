@@ -188,7 +188,7 @@ void test2()
 		mtl::promise<int> p2;
 		auto f2 = p2.get_future();
 		f2.then([](auto &a) {});
-	});*/
+	});
 
 	{
 		std::function<void(int&)> f1 = [](auto &a)
@@ -197,7 +197,7 @@ void test2()
 		};
 		std::function<void(int&)> f2 = [](auto &x) {};
 	}
-
+	*/
 
 	mtl::netLink::stream_sender<mtl::binary_stream> server("127.0.0.1", 6987, true);
 	{
