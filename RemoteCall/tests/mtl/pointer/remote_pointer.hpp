@@ -9,6 +9,30 @@ namespace mtl
 {
 	namespace remote
 	{
+
+
+		template<typename T>
+		struct class_traits
+		{
+			using pointer_type = void;
+
+			struct member_functions
+			{
+
+			};
+		};
+
+
+		template<typename T>
+		struct member_function
+		{
+			member_function(const char* id) : _id(id) {}
+
+			void operator ()() {}
+		protected:
+			const char* _id;
+		};
+
 		//this is adequate only for testing AND/OR internal tools, with this client can easily crash server
 		template<typename T>
 		struct raw_pointer_unsafe
@@ -25,17 +49,17 @@ namespace mtl
 			{
 				_data = d;
 			}
+
+			auto remote()
+			{
+				using members = typename class_traits<T>::member_functions;
+				static members m;
+				return m;
+			}
 		protected:
 			uint64_t _data;
 		};
 		
-
-		template<typename T>
-		struct class_traits
-		{
-			using pointer_type = void;
-		};
-
 
 
 		template<typename R>
@@ -110,19 +134,8 @@ namespace mtl
 
 		}
 
-		template<typename OUT, typename IN>
-		OUT unwrap_type(IN t)
-		{
-			return impl::type_wrapper<OUT, IN>::wrap_type(t);
-		}
 
 
-
-		template<typename OUT, typename IN>
-		OUT wrap_type(IN t)
-		{
-			return impl::type_wrapper<OUT, IN>::wrap_type(t);
-		}
 
 
 

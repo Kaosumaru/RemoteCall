@@ -59,6 +59,11 @@ using namespace std;
 struct TestStructPointer
 {
 	int a = 6;
+
+	int getA()
+	{
+		return a;
+	}
 };
 TestStructPointer _tsp;
 
@@ -80,6 +85,12 @@ namespace mtl
 		struct class_traits<TestStructPointer>
 		{
 			using pointer_type = raw_pointer_unsafe<TestStructPointer>;
+			const char* name = "TestStructPointer";
+
+			struct member_functions
+			{
+				mtl::remote::member_function<int()> getA = { "getA" };
+			};
 		};
 	}
 }
@@ -245,6 +256,8 @@ void test2()
 	o.then([](mtl::remote::raw_pointer_unsafe<TestStructPointer> &p) //strangely, auto &p doesn't work
 	{
 		auto fx = remote_get_a_from_tsp(p);
+
+		//p.remote().getA();
 
 		fx.then([](int &a)
 		{
