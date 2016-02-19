@@ -98,7 +98,7 @@ namespace mtl
 				using transform_return_type = typename remote::TransformType<T>::type;
 
 				template<typename T>
-				using transform_argument_type = transform_return_type<typename std::decay<T>::type>;
+				using transform_argument_type = transform_return_type< std::decay_t<T> >;
 
 
 				template<typename TO, typename FROM>

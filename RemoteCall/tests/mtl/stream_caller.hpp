@@ -26,7 +26,7 @@ namespace mtl
 
 			//transform_argument_type transforms X(A,B,C) into X(A',B',C'), and constructs std::tuple<A',B',C'> args.
 			template<typename T>
-			using transform_argument_type = typename std::decay<T>::type;
+			using transform_argument_type = std::decay_t<T>;
 
 			template<typename TO, typename FROM>
 			TO& convert(FROM &t)
