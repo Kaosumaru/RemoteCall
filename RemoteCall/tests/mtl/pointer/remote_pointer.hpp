@@ -92,6 +92,22 @@ namespace mtl
 				}
 			};
 
+			struct transform_strategy_remote_pointer
+			{
+				template<typename T>
+				using transform_return_type = typename remote::TransformType<T>::type;
+
+				template<typename T>
+				using transform_argument_type = transform_return_type<typename std::decay<T>::type>;
+
+
+				template<typename TO, typename FROM>
+				static TO convert(FROM t)
+				{
+					return type_wrapper<TO, FROM>::wrap_type(t);
+				}
+			};
+
 		}
 
 		template<typename OUT, typename IN>

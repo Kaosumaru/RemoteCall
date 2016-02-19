@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include "../stream_caller.hpp"
 #include "../context.hpp"
+#include "../pointer/remote_pointer.hpp"
 
 namespace mtl
 {
@@ -13,6 +14,8 @@ namespace mtl
 	class function_mapper
 	{
 	private:
+		using call_strategy = mtl::remote::impl::transform_strategy_remote_pointer;
+
 		template<typename R, typename T>
 		struct LambdaCreator
 		{
@@ -21,7 +24,7 @@ namespace mtl
 				return [=](Stream& ss, Stream& out)
 				{
 					using c = context<R, function_mapper>;
-					out << mtl::call_from_stream(ss, function);
+					out << mtl::call_from_stream_strategy<call_strategy>(ss, function);
 				};
 			}
 		};
@@ -33,7 +36,7 @@ namespace mtl
 			{
 				return [=](Stream& ss, Stream& out)
 				{
-					mtl::call_from_stream(ss, function);
+					mtl::call_from_stream_strategy<call_strategy>(ss, function);
 				};
 			}
 		};
